@@ -1,10 +1,25 @@
 const User = require("../models/User");
 
+exports.mustBeLoggedIn = function (req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.flash("errors", "You must be logged in to perform that action");
+    req.session.save(() => {
+      res.redirect("/");
+    });
+  }
+};
+
 exports.login = async function (req, res) {
   try {
     const user = new User(req.body);
     const dbResponse = await user.login();
-    req.session.user = { favColor: "blue", username: user.data.username };
+    req.session.user = {
+      avatar: user.avatar,
+      username: user.data.username,
+      _id: user.data._id,
+    };
     req.session.save(() => {
       res.redirect("/");
     });
@@ -35,7 +50,11 @@ exports.register = async function (req, res) {
         res.redirect("/");
       });
     } else {
-      req.session.user = { username: user.data.username };
+      req.session.user = {
+        avatar: user.avatar,
+        username: user.data.username,
+        _id: user.data._id,
+      };
       req.session.save(() => {
         res.redirect("/");
       });
@@ -45,9 +64,13 @@ exports.register = async function (req, res) {
   }
 };
 
+exports.viewDashboard = function (req, res) {
+  res.render("home-dashboard");
+};
+
 exports.home = function (req, res) {
   if (req.session.user) {
-    res.render("home-dashboard", { username: req.session.user.username });
+    res.redirect("/dashboard");
   } else {
     res.render("home-guest", {
       errors: req.flash("errors"),

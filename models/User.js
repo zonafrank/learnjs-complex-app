@@ -1,6 +1,7 @@
 const validator = require("validator");
 const usersCollection = require("../db").db().collection("users");
 const bcrypt = require("bcrypt");
+const md5 = require("md5");
 
 const User = function (data) {
   this.data = data;
@@ -98,6 +99,7 @@ User.prototype.login = async function () {
   );
 
   if (passwordIsCorrect) {
+    this.getAvatar(foundUser.email);
     return foundUser;
   }
 
@@ -105,20 +107,29 @@ User.prototype.login = async function () {
 };
 
 User.prototype.register = async function () {
-  // validate user data
-  this.cleanUp();
-  await this.validate();
+  try {
+    // validate user data
+    this.cleanUp();
+    await this.validate();
 
-  // if no validation errors, save user data to database
-  if (!this.errors.length) {
-    // hash user password
-    const salt = bcrypt.genSaltSync(10);
-    this.data.password = bcrypt.hashSync(this.data.password, salt);
+    // if no validation errors, save user data to database
+    if (!this.errors.length) {
+      // hash user password
+      const salt = bcrypt.genSaltSync(10);
+      this.data.password = bcrypt.hashSync(this.data.password, salt);
 
-    // const usersCollection = await client.db().collection("users");
-    const dbRes = await usersCollection.insertOne(this.data);
-    return dbRes;
+      // const usersCollection = await client.db().collection("users");
+      const dbRes = await usersCollection.insertOne(this.data);
+      this.getAvatar(this.data.email);
+      return dbRes;
+    }
+  } catch (error) {
+    throw error;
   }
+};
+
+User.prototype.getAvatar = function (email) {
+  this.avatar = `https://gravatar.com/avatar/${md5(email)}?s=128`;
 };
 
 module.exports = User;
