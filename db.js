@@ -7,15 +7,17 @@ const client = new MongoClient(connectionString, {
   useUnifiedTopology: true,
 });
 
-module.exports = {
-  db: null,
-  connect: async function () {
-    try {
-      const connection = await client.connect();
-      console.log("Connected to database");
-      this.db = connection.db("ComplexApp");
-    } catch (error) {
-      throw error;
-    }
-  },
-};
+module.exports = client;
+
+// module.exports = {
+//   db: null,
+//   connect: async function () {
+//     try {
+//       const connection = await client.connect();
+//       console.log("Connected to database");
+//       this.db = connection.db("ComplexApp");
+//     } catch (error) {
+//       throw error;
+//     }
+//   },
+// };
