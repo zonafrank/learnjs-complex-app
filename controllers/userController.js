@@ -14,12 +14,14 @@ exports.mustBeLoggedIn = function (req, res, next) {
 exports.login = async function (req, res) {
   try {
     const user = new User(req.body);
-    const dbResponse = await user.login();
+    await user.login();
+
     req.session.user = {
       avatar: user.avatar,
       username: user.data.username,
       _id: user.data._id,
     };
+
     req.session.save(() => {
       res.redirect("/");
     });
@@ -40,7 +42,8 @@ exports.logout = function (req, res) {
 exports.register = async function (req, res) {
   try {
     const user = new User(req.body);
-    const dbRes = await user.register();
+    await user.register();
+
     if (user.errors.length > 0) {
       user.errors.forEach((error) => {
         req.flash("regErrors", error);
@@ -55,6 +58,7 @@ exports.register = async function (req, res) {
         username: user.data.username,
         _id: user.data._id,
       };
+
       req.session.save(() => {
         res.redirect("/");
       });

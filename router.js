@@ -14,5 +14,6 @@ router.get("/dashboard", userController.viewDashboard)
 // post related routes
 router.get("/create-post", mustBeLoggedIn, postController.viewCreateScreen);
 router.post("/create-post", mustBeLoggedIn, postController.create);
+router.get("/posts/:id", mustBeLoggedIn,postController.viewSinglePost)
 
 module.exports = router;

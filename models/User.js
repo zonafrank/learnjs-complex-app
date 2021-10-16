@@ -86,7 +86,7 @@ User.prototype.cleanUp = function () {
 User.prototype.login = async function () {
   // validate user data
   this.cleanUp();
-  // const usersCollection = await client.db().collection("users");
+
   const foundUser = await usersCollection.findOne({
     username: this.data.username,
   });
@@ -99,8 +99,8 @@ User.prototype.login = async function () {
   );
 
   if (passwordIsCorrect) {
+    this.data = foundUser;
     this.getAvatar(foundUser.email);
-    return foundUser;
   }
 
   throw new Error("Invalid password.");
@@ -118,8 +118,8 @@ User.prototype.register = async function () {
       const salt = bcrypt.genSaltSync(10);
       this.data.password = bcrypt.hashSync(this.data.password, salt);
 
-      // const usersCollection = await client.db().collection("users");
       const dbRes = await usersCollection.insertOne(this.data);
+      this.data._id = dbRes.insertedId.toString()
       this.getAvatar(this.data.email);
       return dbRes;
     }

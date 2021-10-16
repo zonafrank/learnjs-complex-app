@@ -1,5 +1,6 @@
 const postsCollection = require("../db").db().collection("posts");
 const ObjectId = require("mongodb").ObjectId;
+const md5 = require("md5");
 
 const Post = function (data, userId) {
   this.data = data;
@@ -54,6 +55,49 @@ Post.prototype.create = function () {
         });
     }
   });
+};
+
+Post.findSingleById = async function (id) {
+  if (typeof id === "string" && ObjectId.isValid(id)) {
+    let posts = await postsCollection
+      .aggregate([
+        { $match: { _id: ObjectId(id) } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "author",
+            foreignField: "_id",
+            as: "authorDocument",
+          },
+        },
+        {
+          $project: {
+            title: 1,
+            body: 1,
+            createdDate: 1,
+            author: { $arrayElemAt: ["$authorDocument", 0] },
+          },
+        },
+      ])
+      .toArray();
+
+    // clean up author property in each post object
+    posts = posts.map(function (post) {
+      post.author = {
+        username: post.author.username,
+        avatar: `https://gravatar.com/avatar/${md5(post.author.email)}?s=128`,
+      };
+      return post;
+    });
+
+    if (posts.length) {
+      return posts[0];
+    } else {
+      throw new Error("Post not found");
+    }
+  } else {
+    throw new Error("Invalid post id");
+  }
 };
 
 module.exports = Post;
