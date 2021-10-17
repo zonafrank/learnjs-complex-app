@@ -57,38 +57,44 @@ Post.prototype.create = function () {
   });
 };
 
-Post.findSingleById = async function (id) {
-  if (typeof id === "string" && ObjectId.isValid(id)) {
-    let posts = await postsCollection
-      .aggregate([
-        { $match: { _id: ObjectId(id) } },
-        {
-          $lookup: {
-            from: "users",
-            localField: "author",
-            foreignField: "_id",
-            as: "authorDocument",
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            body: 1,
-            createdDate: 1,
-            author: { $arrayElemAt: ["$authorDocument", 0] },
-          },
-        },
-      ])
-      .toArray();
+Post.reusablePostQuery = async function (uniqueOperations, visitorId) {
+  let aggOperations = uniqueOperations.concat([
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "authorDocument",
+      },
+    },
+    {
+      $project: {
+        title: 1,
+        body: 1,
+        createdDate: 1,
+        authorId: "$author",
+        author: { $arrayElemAt: ["$authorDocument", 0] },
+      },
+    },
+  ]);
+  let posts = await postsCollection.aggregate(aggOperations).toArray();
 
-    // clean up author property in each post object
-    posts = posts.map(function (post) {
-      post.author = {
-        username: post.author.username,
-        avatar: `https://gravatar.com/avatar/${md5(post.author.email)}?s=128`,
-      };
-      return post;
-    });
+  // clean up author property in each post object
+  return posts.map(function (post) {
+    post.isVisitorOwner = post.authorId.equals(visitorId)
+    post.author = {
+      username: post.author.username,
+      avatar: `https://gravatar.com/avatar/${md5(post.author.email)}?s=128`,
+    };
+    return post;
+  });
+};
+
+Post.findSingleById = async function (id, visitorId) {
+  if (typeof id === "string" && ObjectId.isValid(id)) {
+    let posts = await Post.reusablePostQuery([
+      { $match: { _id: ObjectId(id) } },
+    ], visitorId);
 
     if (posts.length) {
       return posts[0];
@@ -98,6 +104,14 @@ Post.findSingleById = async function (id) {
   } else {
     throw new Error("Invalid post id");
   }
+};
+
+Post.findByAuthorId = async function (authorId, visitorId) {
+  const posts =  await Post.reusablePostQuery([
+    { $match: { author: ObjectId(authorId) } },
+    { $sort: { createdDate: -1 } },
+  ], visitorId);
+  return posts
 };
 
 module.exports = Post;

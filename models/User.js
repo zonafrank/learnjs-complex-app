@@ -1,7 +1,7 @@
 const validator = require("validator");
 const usersCollection = require("../db").db().collection("users");
 const bcrypt = require("bcrypt");
-const md5 = require("md5");
+const crypto = require("crypto")
 
 const User = function (data) {
   this.data = data;
@@ -99,8 +99,9 @@ User.prototype.login = async function () {
   );
 
   if (passwordIsCorrect) {
-    this.data = foundUser;
-    this.getAvatar(foundUser.email);
+    this.data = foundUser
+    this.getAvatar(foundUser.email)
+    return
   }
 
   throw new Error("Invalid password.");
@@ -129,7 +130,35 @@ User.prototype.register = async function () {
 };
 
 User.prototype.getAvatar = function (email) {
-  this.avatar = `https://gravatar.com/avatar/${md5(email)}?s=128`;
+  const hash = crypto.createHash('md5').update(email).digest("hex");
+  this.avatar = `https://gravatar.com/avatar/${hash}?s=128`;
 };
+
+User.findByUsername = function(username) {
+  return new Promise(function (resolve, reject) {
+    if (typeof(username) !== "string") {
+      return reject()
+    }
+
+    usersCollection.findOne({username: username}).then(function (userDoc) {
+      if (userDoc) {
+        const user = new User(userDoc)
+        user.getAvatar(userDoc.email)
+
+        const userData = {
+          _id: userDoc._id,
+          username: userDoc.username,
+          avatar: user.avatar
+        }
+
+        resolve(userData)
+      } else {
+        reject()
+      }
+    }).catch(() => {
+      reject()
+    })
+  })
+}
 
 module.exports = User;
