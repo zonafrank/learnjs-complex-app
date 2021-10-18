@@ -29,15 +29,47 @@ exports.viewSinglePost = async function (req, res) {
 
 exports.viewEditScreen = async function (req, res) {
   try {
-    const post = await findSingleById(req.params.id, req.visitorId)
-    console.log(req.params.id)
-    console.log(post)
-  res.render("edit-post", {post})
+    const post = await findSingleById(req.params.id, req.visitorId);
+    if (post.authorId.toString() === req.visitorId) {
+      res.render("edit-post", { post });
+    } else {
+      req.flash("errors", "You do not have permission to perform that action")
+      req.session.save(() => res.redirect("/"))
+    }
   } catch (error) {
-    res.render("404")
+    res.render("404");
   }
-}
+};
 
 exports.edit = async function (req, res) {
-  
-} 
+  let post = new Post(req.body, req.visitorId, req.params.id);
+  post
+    .update()
+    .then((status) => {
+      // the post was successfully updated in the database
+      // or user did have permission but there were validation errors
+      if (status === "success") {
+        // post was updated in db
+        req.flash("success", "Post successfully updatetd")
+        req.session.save(() => {
+          res.redirect(`/posts/${req.params.id}`)
+        })
+      } else {
+        post.errors.forEach((error) => {
+          req.flash("errors", error)
+        })
+
+        req.session.save(() => {
+          res.redirect(`/posts/${req.params.id}/edit`)
+        })
+      }
+    })
+    .catch(() => {
+      // a post with the requested id does not exist
+      // or if the current visitor is not the owner of the post
+      req.flash("errors", "You do not have permission to perform that action")
+      req.session.save(() => {
+        res.redirect("/")
+      })
+    });
+};
