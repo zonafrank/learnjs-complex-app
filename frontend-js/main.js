@@ -1,3 +1,6 @@
 // prettier-ignore
-import search from "./modules/search"
-search
+import Search from "./modules/search"
+
+if (document.body.querySelector(".header-search-icon")) {
+  new Search()
+}

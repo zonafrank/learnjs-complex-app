@@ -21,5 +21,6 @@ router.get("/posts/:id", postController.viewSinglePost)
 router.get("/posts/:id/edit", mustBeLoggedIn, postController.viewEditScreen)
 router.post("/posts/:id/edit", mustBeLoggedIn, postController.edit)
 router.post("/posts/:id/delete", mustBeLoggedIn, postController.delete)
+router.post("/search", mustBeLoggedIn, postController.search)
 
 module.exports = router;

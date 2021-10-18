@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon index.js --ignore frontend-js --ignore --public/ & webpack --watch",
+    "dev": "nodemon index.js --ignore ./frontend-js/ --ignore ./public/ & webpack --watch",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

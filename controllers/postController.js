@@ -11,12 +11,12 @@ exports.create = function (req, res) {
   post
     .create()
     .then((postId) => {
-      req.flash("success", "New post successfully created")
-      req.session.save(res.redirect(`/posts/${postId}`))
+      req.flash("success", "New post successfully created");
+      req.session.save(res.redirect(`/posts/${postId}`));
     })
     .catch((errors) => {
-      errors.forEach(error => req.flash("errors", error))
-      req.session.save(() => res.redirect("/create-post"))
+      errors.forEach((error) => req.flash("errors", error));
+      req.session.save(() => res.redirect("/create-post"));
     });
 };
 
@@ -35,8 +35,8 @@ exports.viewEditScreen = async function (req, res) {
     if (post.isVisitorOwner) {
       res.render("edit-post", { post });
     } else {
-      req.flash("errors", "You do not have permission to perform that action")
-      req.session.save(() => res.redirect("/"))
+      req.flash("errors", "You do not have permission to perform that action");
+      req.session.save(() => res.redirect("/"));
     }
   } catch (error) {
     res.render("404");
@@ -52,36 +52,46 @@ exports.edit = async function (req, res) {
       // or user did have permission but there were validation errors
       if (status === "success") {
         // post was updated in db
-        req.flash("success", "Post successfully updatetd")
+        req.flash("success", "Post successfully updatetd");
         req.session.save(() => {
-          res.redirect(`/posts/${req.params.id}`)
-        })
+          res.redirect(`/posts/${req.params.id}`);
+        });
       } else {
         post.errors.forEach((error) => {
-          req.flash("errors", error)
-        })
+          req.flash("errors", error);
+        });
 
         req.session.save(() => {
-          res.redirect(`/posts/${req.params.id}/edit`)
-        })
+          res.redirect(`/posts/${req.params.id}/edit`);
+        });
       }
     })
     .catch(() => {
       // a post with the requested id does not exist
       // or if the current visitor is not the owner of the post
-      req.flash("errors", "You do not have permission to perform that action")
+      req.flash("errors", "You do not have permission to perform that action");
       req.session.save(() => {
-        res.redirect("/")
-      })
+        res.redirect("/");
+      });
     });
 };
 
 exports.delete = async function (req, res) {
-  Post.delete(req.params.id, req.visitorId).then(() => {
-    req.flash("success", "Post was successfully deleted")
-    req.session.save(() => res.redirect(`/profiles/${req.session.user.username}`))
-  }).catch((error) => {
-    req.flash("errors", "You do not have permission to perform that action")
-    req.session.save(() => res.redirect("/"))
-  })
-}
+  Post.delete(req.params.id, req.visitorId)
+    .then(() => {
+      req.flash("success", "Post was successfully deleted");
+      req.session.save(() =>
+        res.redirect(`/profiles/${req.session.user.username}`)
+      );
+    })
+    .catch((error) => {
+      req.flash("errors", "You do not have permission to perform that action");
+      req.session.save(() => res.redirect("/"));
+    });
+};
+
+exports.search = function (req, res) {
+  Post.search(req.body.searchTerm)
+    .then((posts) => res.json(posts))
+    .catch(() => res.json([]));
+};

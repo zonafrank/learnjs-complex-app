@@ -98,7 +98,11 @@ Post.prototype.updateDb = function () {
   });
 };
 
-Post.reusablePostQuery = async function (uniqueOperations, visitorId) {
+Post.reusablePostQuery = async function (
+  uniqueOperations,
+  visitorId,
+  finalOperations = []
+) {
   let aggOperations = uniqueOperations.concat([
     {
       $lookup: {
@@ -117,12 +121,14 @@ Post.reusablePostQuery = async function (uniqueOperations, visitorId) {
         author: { $arrayElemAt: ["$authorDocument", 0] },
       },
     },
-  ]);
+  ], finalOperations);
   let posts = await postsCollection.aggregate(aggOperations).toArray();
 
   // clean up author property in each post object
   return posts.map(function (post) {
     post.isVisitorOwner = post.authorId.equals(visitorId);
+    post.authorId = undefined;
+    
     post.author = {
       username: post.author.username,
       avatar: `https://gravatar.com/avatar/${md5(post.author.email)}?s=128`,
@@ -170,6 +176,19 @@ Post.delete = function (postId, currentUserId) {
         reject();
       }
     } catch (error) {
+      reject();
+    }
+  });
+};
+
+Post.search = function (searchTerm) {
+  return new Promise(async (resolve, reject) => {
+    if (typeof (searchTerm === "string")) {
+      let posts = await Post.reusablePostQuery([
+        { $match: { $text: { $search: searchTerm } } }
+      ],undefined, [{ $sort: { score: { $meta: "textScore" } } }]);
+      resolve(posts);
+    } else {
       reject();
     }
   });
