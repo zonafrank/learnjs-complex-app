@@ -17,8 +17,9 @@ router.get("/profiles/:username", userController.ifUserExists, userController.pr
 // post related routes
 router.get("/create-post", mustBeLoggedIn, postController.viewCreateScreen);
 router.post("/create-post", mustBeLoggedIn, postController.create);
-router.get("/posts/:id", mustBeLoggedIn,postController.viewSinglePost)
+router.get("/posts/:id", postController.viewSinglePost)
 router.get("/posts/:id/edit", mustBeLoggedIn, postController.viewEditScreen)
 router.post("/posts/:id/edit", mustBeLoggedIn, postController.edit)
+router.post("/posts/:id/delete", mustBeLoggedIn, postController.delete)
 
 module.exports = router;

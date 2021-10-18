@@ -10,11 +10,13 @@ exports.create = function (req, res) {
 
   post
     .create()
-    .then(() => {
-      res.redirect(`/profiles/${req.session.user.username}`);
+    .then((postId) => {
+      req.flash("success", "New post successfully created")
+      req.session.save(res.redirect(`/posts/${postId}`))
     })
     .catch((errors) => {
-      res.send(errors);
+      errors.forEach(error => req.flash("errors", error))
+      req.session.save(() => res.redirect("/create-post"))
     });
 };
 
@@ -30,7 +32,7 @@ exports.viewSinglePost = async function (req, res) {
 exports.viewEditScreen = async function (req, res) {
   try {
     const post = await findSingleById(req.params.id, req.visitorId);
-    if (post.authorId.toString() === req.visitorId) {
+    if (post.isVisitorOwner) {
       res.render("edit-post", { post });
     } else {
       req.flash("errors", "You do not have permission to perform that action")
@@ -73,3 +75,13 @@ exports.edit = async function (req, res) {
       })
     });
 };
+
+exports.delete = async function (req, res) {
+  Post.delete(req.params.id, req.visitorId).then(() => {
+    req.flash("success", "Post was successfully deleted")
+    req.session.save(() => res.redirect(`/profiles/${req.session.user.username}`))
+  }).catch((error) => {
+    req.flash("errors", "You do not have permission to perform that action")
+    req.session.save(() => res.redirect("/"))
+  })
+}

@@ -1,6 +1,7 @@
 const postsCollection = require("../db").db().collection("posts");
 const ObjectId = require("mongodb").ObjectId;
 const md5 = require("md5");
+const sanitizeHTML = require("sanitize-html");
 
 const Post = function (data, userId, requestedPostId) {
   this.data = data;
@@ -19,8 +20,14 @@ Post.prototype.cleanUp = function () {
   }
 
   this.data = {
-    title: this.data.title?.trim(),
-    body: this.data.body?.trim(),
+    title: sanitizeHTML(this.data.title?.trim(), {
+      allowedTags: [],
+      allowedAttributes: {},
+    }),
+    body: sanitizeHTML(this.data.body?.trim(), {
+      allowedTags: [],
+      allowedAttributes: {},
+    }),
     createdDate: new Date(),
     author: ObjectId(this.userId),
   };
@@ -47,8 +54,9 @@ Post.prototype.create = function () {
       // save post into database
       postsCollection
         .insertOne(this.data)
-        .then(() => {
-          resolve();
+        .then((dbResponse) => {
+          console.log(dbResponse);
+          resolve(dbResponse.insertedId.toString());
         })
         .catch(() => {
           this.errors.push("Please try again later.");
@@ -63,29 +71,32 @@ Post.prototype.update = function () {
     try {
       const post = await Post.findSingleById(this.requestedPostId, this.userId);
       if (post.isVisitorOwner) {
-        let status = await this.updateDb()
-        resolve(status)
+        let status = await this.updateDb();
+        resolve(status);
       } else {
-        reject()
+        reject();
       }
     } catch (error) {
-      reject()
+      reject();
     }
   });
 };
 
-Post.prototype.updateDb = function() {
+Post.prototype.updateDb = function () {
   return new Promise(async (resolve, reject) => {
     this.cleanUp();
-    this.validate()
+    this.validate();
     if (!this.errors.length) {
-      await postsCollection.findOneAndUpdate({_id: ObjectId(this.requestedPostId)}, {$set: {title: this.data.title, body: this.data.body}})
-      resolve("success")
+      await postsCollection.findOneAndUpdate(
+        { _id: ObjectId(this.requestedPostId) },
+        { $set: { title: this.data.title, body: this.data.body } }
+      );
+      resolve("success");
     } else {
-      reject("failure")
+      reject("failure");
     }
-  })
-}
+  });
+};
 
 Post.reusablePostQuery = async function (uniqueOperations, visitorId) {
   let aggOperations = uniqueOperations.concat([
@@ -146,6 +157,22 @@ Post.findByAuthorId = async function (authorId, visitorId) {
     visitorId
   );
   return posts;
+};
+
+Post.delete = function (postId, currentUserId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(postId, currentUserId);
+      if (post.isVisitorOwner) {
+        await postsCollection.deleteOne({ _id: ObjectId(postId) });
+        resolve();
+      } else {
+        reject();
+      }
+    } catch (error) {
+      reject();
+    }
+  });
 };
 
 module.exports = Post;
