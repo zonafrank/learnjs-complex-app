@@ -49,30 +49,35 @@ class Search {
 
   renderResultsHTML(posts) {
     let markup;
-    
+
     if (posts.length > 0) {
       const formatDate = (date) => {
-        const d = new Date(date)
-        return `${d.getDate()}/${
-        d.getMonth() + 1
-      }/${d.getFullYear()}
-      `
-    };
+        const d = new Date(date);
+        return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}
+      `;
+      };
 
       const innerMarkup = posts
         .map((post) => {
           return `
-            <a href="/posts/${post._id}" class="list-group-item list-group-item-action">
-              <img class="avatar-tiny" src="${post.author.avatar}"> <strong>${post.title}</strong>
-              <span class="text-muted small">by ${post.author.username} on ${formatDate(post.createdDate)}</span>
+            <a href="/posts/${
+              post._id
+            }" class="list-group-item list-group-item-action">
+              <img class="avatar-tiny" src="${post.author.avatar}"> <strong>${
+            post.title
+          }</strong>
+              <span class="text-muted small">by ${
+                post.author.username
+              } on ${formatDate(post.createdDate)}</span>
             </a>
             `;
         })
         .join("");
-
+      
+      const itemsFoundText = `${posts.length} ${posts.length < 1 ? "item": "items"} found`;
       markup = `
       <div class="list-group shadow-sm">
-        <div class="list-group-item active"><strong>Search Results</strong> (4 items found)</div>
+        <div class="list-group-item active"><strong>Search Results</strong> (${itemsFoundText})</div>
           ${innerMarkup}
         </div>
       </div>
@@ -80,7 +85,7 @@ class Search {
     } else {
       markup = `<p class="alert alert-danger text-center shadow-sm">Sorry, we could not find any results for that search</p>`;
     }
-    
+
     this.resultsArea.innerHTML = markup;
     this.hideLoaderIcon();
     this.showResultsArea();
@@ -104,21 +109,20 @@ class Search {
   }
 
   keyPressHandler() {
-    const currentValue = this.inputField.Value;
-
+    const currentValue = this.inputField.value;
     if (currentValue === "") {
       clearTimeout(this.typingWaitTimer);
       this.hideLoaderIcon();
       this.hideResultsArea();
+    } else {
+      if (currentValue !== this.previousValue) {
+        clearTimeout(this.typingWaitTimer);
+        this.showLoaderIcon();
+        this.hideResultsArea();
+        this.typingWaitTimer = setTimeout(() => this.sendRequest(), 750);
+      }
     }
-
-    if (currentValue !== "" && currentValue !== this.previousValue) {
-      clearTimeout(this.typingWaitTimer);
-      this.showLoaderIcon();
-      this.hideResultsArea();
-      this.typingWaitTimer = setTimeout(() => this.sendRequest(), 500);
-    }
-    this.inputField.previousValue = currentValue;
+    this.previousValue = currentValue;
   }
 
   closeOverlay() {
