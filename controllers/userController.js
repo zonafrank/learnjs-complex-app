@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Post = require("../models/Post");
+const Follow = require("../models/Follow");
 
 exports.mustBeLoggedIn = function (req, res, next) {
   if (req.session.user) {
@@ -22,7 +23,7 @@ exports.login = async function (req, res) {
       username: user.data.username,
       _id: user.data._id,
     };
-    console.log("req.session.user", req.session.user)
+    console.log("req.session.user", req.session.user);
 
     req.session.save(() => {
       res.redirect("/");
@@ -92,6 +93,8 @@ exports.profilePostsScreen = function (req, res) {
         profileUsername: req.profileUser.username,
         profileAvatar: req.profileUser.avatar,
         posts: posts,
+        isFollowing: req.isFollowing,
+        isOwnProfile: req.isOwnProfile,
       });
     })
     .catch(() => {
@@ -108,4 +111,34 @@ exports.ifUserExists = function (req, res, next) {
     .catch(() => {
       res.render("404");
     });
+};
+
+exports.sharedProfileData = async function (req, res, next) {
+  let isOwnProfile = false;
+  let isFollowing = false;
+  if (req.session.user) {
+    isOwnProfile = req.profileUser._id.equals(req.session.user._id);
+    isFollowing = await Follow.isVisitorFollowing(
+      req.profileUser._id,
+      req.visitorId
+    );
+  }
+  req.isFollowing = isFollowing;
+  req.isOwnProfile = isOwnProfile;
+  next();
+};
+
+exports.profileFollowersScreen = async function (req, res) {
+  try {
+    let followers = await Follow.getFollowersById(req.profileUser._id);
+  res.render("profile-followers", {
+    followers: followers,
+    profileUsername: req.profileUser.username,
+    profileAvatar: req.profileUser.avatar,
+    isFollowing: req.isFollowing,
+    isOwnProfile: req.isOwnProfile,
+  });  
+  } catch (error) {
+    res.render("404")  
+  }
 };

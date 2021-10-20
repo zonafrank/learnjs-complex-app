@@ -29,12 +29,12 @@
   </div>
 
   <p class="text-muted small mb-4">
-    <a href="#"
+    <a href="/profiles/<%= post.author.username %>"
       ><img
         class="avatar-tiny"
         src="<%= post.author.avatar %>"
     /></a>
-    Posted by <a href="#"><%= post.author.username %></a> on <%= post.createdDate.getDate() %>/<%=
+    Posted by <a href="/profiles/<%= post.author.username %>"><%= post.author.username %></a> on <%= post.createdDate.getDate() %>/<%=
     post.createdDate.getMonth() + 1 %>/<%= post.createdDate.getFullYear() + 1 %>
   </p>
 

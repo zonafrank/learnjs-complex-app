@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 class Search {
   // 1. Select DOM elements and keep track of any useful data
   constructor() {
@@ -73,15 +75,17 @@ class Search {
             `;
         })
         .join("");
-      
-      const itemsFoundText = `${posts.length} ${posts.length < 1 ? "item": "items"} found`;
-      markup = `
+
+      const itemsFoundText = `${posts.length} ${
+        posts.length < 1 ? "item" : "items"
+      } found`;
+      markup = DOMPurify.sanitize(`
       <div class="list-group shadow-sm">
         <div class="list-group-item active"><strong>Search Results</strong> (${itemsFoundText})</div>
           ${innerMarkup}
         </div>
       </div>
-    `;
+    `);
     } else {
       markup = `<p class="alert alert-danger text-center shadow-sm">Sorry, we could not find any results for that search</p>`;
     }
