@@ -142,3 +142,18 @@ exports.profileFollowersScreen = async function (req, res) {
     res.render("404")  
   }
 };
+
+exports.profileFollowingScreen = async function (req, res) {
+  try {
+    let following = await Follow.getFollowingById(req.profileUser._id);
+  res.render("profile-following", {
+    following: following,
+    profileUsername: req.profileUser.username,
+    profileAvatar: req.profileUser.avatar,
+    isFollowing: req.isFollowing,
+    isOwnProfile: req.isOwnProfile,
+  });  
+  } catch (error) {
+    res.render("404")  
+  }
+};
