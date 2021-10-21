@@ -158,12 +158,26 @@ Follow.getFollowingById = async function (id) {
         user.getAvatar(f.email);
         return { username: f.username, avatar: user.avatar };
       });
-      
+
       resolve(following)
     } catch (error) {
       reject();
     }
   });
 };
+
+Follow.countFollowersById = function(id) {
+  return new Promise(async (resolve, reject) => {
+    let followersCount = await followsCollection.countDocuments({followedId: id})
+    resolve(followersCount)
+  })
+}
+
+Follow.countFollowingById = function(id) {
+  return new Promise(async (resolve, reject) => {
+    let followingCount = await followsCollection.countDocuments({authorId: id})
+    resolve(followingCount)
+  })
+}
 
 module.exports = Follow;

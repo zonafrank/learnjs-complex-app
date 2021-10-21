@@ -4,13 +4,13 @@
   <%- include("includes/profileShared") %>
 
   <div class="list-group">
-    <% following.forEach(f => { %>
+    <% following.forEach(followedUser => { %>
     <a
-      href="/profiles/<%= f.username %>"
+      href="/profiles/<%= followedUser.username %>"
       class="list-group-item list-group-item-action"
     >
-      <img class="avatar-tiny" src="<%= f.avatar %>" />
-      <%= f.username%>
+      <img class="avatar-tiny" src="<%= followedUser.avatar %>" />
+      <%= followedUser.username%>
     </a>
     <% }) %>
   </div>
