@@ -71,12 +71,14 @@ exports.register = async function (req, res) {
   }
 };
 
-exports.viewDashboard = function (req, res) {
-  res.render("home-dashboard");
+exports.viewDashboard = async function (req, res) {
+  let posts = await Post.getFeed(req.session.user._id)
+  res.render("home-dashboard", {posts});
 };
 
 exports.home = function (req, res) {
   if (req.session.user) {
+    // fetch feed of posts for current user
     res.redirect("/dashboard");
   } else {
     res.render("home-guest", {
