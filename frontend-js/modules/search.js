@@ -3,6 +3,7 @@ import DOMPurify from "dompurify";
 class Search {
   // 1. Select DOM elements and keep track of any useful data
   constructor() {
+    this._csrf = document.querySelector("input[name='_csrf']").value;
     this.injectHTML();
     this.inputField = document.querySelector("#live-search-field");
     this.headerSearchIcon = document.querySelector(".header-search-icon");
@@ -101,7 +102,7 @@ class Search {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ searchTerm: this.inputField.value }),
+      body: JSON.stringify({ searchTerm: this.inputField.value, _csrf: this._csrf }),
     })
       .then((response) => {
         return response.json();

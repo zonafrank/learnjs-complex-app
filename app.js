@@ -4,7 +4,8 @@ const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const router = require("./router");
 const markdown = require("marked");
-const sanitiezeHTML = require("sanitize-html");
+const sanitizeHTML = require("sanitize-html");
+const csrf = require("csurf")
 
 const app = express();
 const sessionOptions = session({
@@ -20,7 +21,7 @@ app.use(flash());
 
 app.use(function (req, res, next) {
   res.locals.filterUserHTML = function (content) {
-    return sanitiezeHTML(markdown(content), {
+    return sanitizeHTML(markdown(content), {
       allwedTags: ["p", "br", "ul", "ol", "li",
         "strong", "bold", "i", "em", "h1", "h2",
         "h3", "h4", "h5", "h6",
@@ -48,6 +49,52 @@ app.use(express.static("public"));
 app.set("views", "views");
 app.set("view engine", "ejs");
 
+app.use(csrf())
+
+app.use(function(req, res, next) {
+  res.locals.csrfToken = req.csrfToken()
+  next()
+})
+
 app.use("/", router);
 
-module.exports = app;
+app.use(function(err, req, res, next) {
+  if (err) {
+    if (err.code === "EBADCSRFTOKEN") {
+      req.flash("errors", "Cross site request forgery detected")
+      req.session.save(() => {
+        res.redirect("/")
+      })
+    } else {
+      res.render("404")
+    }
+  }
+
+})
+
+const server = require("http").createServer(app);
+const io = require("socket.io")(server)
+
+io.use(function(socket, next) {
+  sessionOptions(socket.request, socket.request.res, next)
+})
+
+io.on("connection", (socket) => {
+  let {user} = socket.request.session
+  if (user) {
+    socket.emit("welcome", {
+      username: user.username,
+      avatar: user.avatar
+    })
+
+    socket.on("chatMessageFromBrowser", (data) => {
+      socket.broadcast.emit("chatMessageFromServer", {
+        message: sanitizeHTML(data.message, {allowedTags: [], allowedAttributes: {}}),
+        username: user.username,
+        avatar: user.avatar
+      })
+    })
+  }
+})
+
+module.exports = server;

@@ -23,7 +23,7 @@ exports.create = function (req, res) {
 exports.viewSinglePost = async function (req, res) {
   try {
     const post = await Post.findSingleById(req.params.id, req.visitorId);
-    res.render("single-post-screen", { post });
+    res.render("single-post-screen", { post, title: post.title });
   } catch (error) {
     res.render("404");
   }
@@ -33,7 +33,7 @@ exports.viewEditScreen = async function (req, res) {
   try {
     const post = await findSingleById(req.params.id, req.visitorId);
     if (post.isVisitorOwner) {
-      res.render("edit-post", { post });
+      res.render("edit-post", { post, title: post.title });
     } else {
       req.flash("errors", "You do not have permission to perform that action");
       req.session.save(() => res.redirect("/"));

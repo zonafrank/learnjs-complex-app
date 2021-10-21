@@ -23,7 +23,6 @@ exports.login = async function (req, res) {
       username: user.data.username,
       _id: user.data._id,
     };
-    console.log("req.session.user", req.session.user);
 
     req.session.save(() => {
       res.redirect("/");
@@ -72,8 +71,8 @@ exports.register = async function (req, res) {
 };
 
 exports.viewDashboard = async function (req, res) {
-  let posts = await Post.getFeed(req.session.user._id)
-  res.render("home-dashboard", {posts});
+  let posts = await Post.getFeed(req.session.user._id);
+  res.render("home-dashboard", { posts });
 };
 
 exports.home = function (req, res) {
@@ -92,6 +91,7 @@ exports.profilePostsScreen = function (req, res) {
   Post.findByAuthorId(req.profileUser._id.toString(), req.visitorId)
     .then((posts) => {
       res.render("profile.ejs", {
+        title: `Profile for ${req.profileUser.username}`,
         profileUsername: req.profileUser.username,
         profileAvatar: req.profileUser.avatar,
         posts: posts,
@@ -154,6 +154,7 @@ exports.sharedProfileData = async function (req, res, next) {
 exports.profileFollowersScreen = async function (req, res) {
   try {
     let followers = await Follow.getFollowersById(req.profileUser._id);
+    console.log(req.profileUser.username);
     res.render("profile-followers", {
       followers: followers,
       profileUsername: req.profileUser.username,
@@ -190,5 +191,31 @@ exports.profileFollowingScreen = async function (req, res) {
     });
   } catch (error) {
     res.render("404");
+  }
+};
+
+exports.doesUsernameExist = async function (req, res) {
+  try {
+    const foundUser = await User.findByUsername(req.body.username);
+    if (foundUser) {
+      res.json({ exists: true });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (error) {
+    res.json({ exists: false });
+  }
+};
+
+exports.doesEmailExist = async function (req, res) {
+  try {
+    let emailBool = await User.doesEmailExist(req.body.email);
+    if (emailBool) {
+      res.json({ exists: true });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (error) {
+    throw error;
   }
 };

@@ -15,6 +15,7 @@
           ><i class="fas fa-edit"></i
         ></a>
         <form class="delete-post-form d-inline" action="/posts/<%= post._id %>/delete" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button
             class="delete-post-button text-danger"
             data-toggle="tooltip"

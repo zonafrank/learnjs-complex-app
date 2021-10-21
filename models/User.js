@@ -1,7 +1,7 @@
 const validator = require("validator");
 const usersCollection = require("../db").db().collection("users");
 const bcrypt = require("bcrypt");
-const crypto = require("crypto")
+const crypto = require("crypto");
 
 const User = function (data) {
   this.data = data;
@@ -99,9 +99,9 @@ User.prototype.login = async function () {
   );
 
   if (passwordIsCorrect) {
-    this.data = foundUser
-    this.getAvatar(foundUser.email)
-    return
+    this.data = foundUser;
+    this.getAvatar(foundUser.email);
+    return;
   }
 
   throw new Error("Invalid password.");
@@ -120,7 +120,7 @@ User.prototype.register = async function () {
       this.data.password = bcrypt.hashSync(this.data.password, salt);
 
       const dbRes = await usersCollection.insertOne(this.data);
-      this.data._id = dbRes.insertedId.toString()
+      this.data._id = dbRes.insertedId.toString();
       this.getAvatar(this.data.email);
       return dbRes;
     }
@@ -130,35 +130,53 @@ User.prototype.register = async function () {
 };
 
 User.prototype.getAvatar = function (email) {
-  const hash = crypto.createHash('md5').update(email).digest("hex");
+  const hash = crypto.createHash("md5").update(email).digest("hex");
   this.avatar = `https://gravatar.com/avatar/${hash}?s=128`;
 };
 
-User.findByUsername = function(username) {
+User.findByUsername = function (username) {
   return new Promise(function (resolve, reject) {
-    if (typeof(username) !== "string") {
-      return reject()
+    if (typeof username !== "string") {
+      return reject();
     }
 
-    usersCollection.findOne({username: username}).then(function (userDoc) {
-      if (userDoc) {
-        const user = new User(userDoc)
-        user.getAvatar(userDoc.email)
+    usersCollection
+      .findOne({ username: username })
+      .then(function (userDoc) {
+        if (userDoc) {
+          const user = new User(userDoc);
+          user.getAvatar(userDoc.email);
 
-        const userData = {
-          _id: userDoc._id,
-          username: userDoc.username,
-          avatar: user.avatar
+          const userData = {
+            _id: userDoc._id,
+            username: userDoc.username,
+            avatar: user.avatar,
+          };
+
+          resolve(userData);
+        } else {
+          reject();
         }
+      })
+      .catch(() => {
+        reject();
+      });
+  });
+};
 
-        resolve(userData)
-      } else {
-        reject()
-      }
-    }).catch(() => {
-      reject()
-    })
-  })
-}
+User.doesEmailExist = function (email) {
+  return new Promise(async function (resolve, reject) {
+    if (typeof email !== "string") {
+      return resolve(false);
+    }
+
+    const user = await usersCollection.findOne({ email: email });
+    if (user) {
+      resolve(true);
+    } else {
+      resolve(false);
+    }
+  });
+};
 
 module.exports = User;
