@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Post = require("../models/Post");
 const Follow = require("../models/Follow");
+const jwt = require("jsonwebtoken")
 
 exports.mustBeLoggedIn = function (req, res, next) {
   if (req.session.user) {
@@ -10,6 +11,15 @@ exports.mustBeLoggedIn = function (req, res, next) {
     req.session.save(() => {
       res.redirect("/");
     });
+  }
+};
+
+exports.apiMustBeLoggedIn = function (req, res, next) {
+  try {
+    req.apiUser = jwt.verify(req.body.token, process.env.JWTSECRET)
+    next();
+  } catch (error) {
+    res.json("Sorry, you must provide a valid token.")
   }
 };
 
@@ -32,6 +42,16 @@ exports.login = async function (req, res) {
     req.session.save(() => {
       res.redirect("/");
     });
+  }
+};
+
+exports.apiLogin = async function (req, res) {
+  try {
+    const user = new User(req.body);
+    await user.login();
+    res.json(jwt.sign({_id: user.data._id}, process.env.JWTSECRET, {expiresIn: "2d"}))
+  } catch (error) {
+    res.json("Oops! That password is incorrect")
   }
 };
 
@@ -219,3 +239,13 @@ exports.doesEmailExist = async function (req, res) {
     throw error;
   }
 };
+
+exports.apiGetPostsByUsername = async function(req, res) {
+  try {
+    let authorDoc = await User.findByUsername(req.params.username)
+    let posts = await Post.findByAuthorId(authorDoc._id)
+    res.json(posts)
+  } catch (error) {
+    res.json("Sorry, invalid request.")
+  }
+}

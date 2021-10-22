@@ -1,0 +1,28 @@
+GET http://localhost:3000/api/posts/username
+
+###
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "johndoe",
+  "password": "password12345"
+}
+
+###
+POST http://localhost:3000/api/create-post
+Content-Type: application/json
+
+{
+  "title": "My first post through the API",
+  "body": "This is my first post through the brand new API we just implemented.",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MTZiZWMyM2QwMmRhMDljZTYxNmQxMjUiLCJpYXQiOjE2MzQ5MDI4MTIsImV4cCI6MTYzNTA3NTYxMn0.9m5M8r2kn1jJALsm-C8uhei-4GjMWBrVmsuFcslP-cA"
+}
+
+###
+DELETE http://localhost:3000/api/posts/616d53dabca537d779b34513
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MTZiZWMyM2QwMmRhMDljZTYxNmQxMjUiLCJpYXQiOjE2MzQ5MDI4MTIsImV4cCI6MTYzNTA3NTYxMn0.9m5M8r2kn1jJALsm-C8uhei-4GjMWBrVmsuFcslP-cA"
+}
